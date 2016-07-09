@@ -22,11 +22,10 @@ namespace SpacecraftAndroid
         , Theme = "@style/Theme.Splash"
         , AlwaysRetainTaskState = true
         , LaunchMode = Android.Content.PM.LaunchMode.SingleInstance
-        , ScreenOrientation = ScreenOrientation.Portrait
+        , ScreenOrientation = ScreenOrientation.Landscape
         , ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden)]
     public class Program : AndroidGameActivity
     {
-
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
@@ -40,7 +39,6 @@ namespace SpacecraftAndroid
 
         }
     }
-
 
 }
 

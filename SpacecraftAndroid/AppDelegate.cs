@@ -12,13 +12,14 @@ namespace SpacecraftAndroid
         {
             application.ContentRootDirectory = "Content";
             var windowSize = mainWindow.WindowSizeInPixels;
+            mainWindow.FullScreen = true;
 
             var desiredWidth = 768.0f;
             var desiredHeight = 1024.0f;
 
             // This will set the world bounds to be (0,0, w, h)
             // CCSceneResolutionPolicy.ShowAll will ensure that the aspect ratio is preserved
-            CCScene.SetDefaultDesignResolution(desiredWidth, desiredHeight, CCSceneResolutionPolicy.ShowAll);
+            //CCScene.SetDefaultDesignResolution(desiredWidth, desiredHeight, CCSceneResolutionPolicy.ShowAll);
 
             // Determine whether to use the high or low def versions of our images
             // Make sure the default texel to content size ratio is set correctly
