@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Xna.Framework;
 using CocosSharp;
 using CocosDenshion;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace SpacecraftAndroid
 {
@@ -10,12 +11,27 @@ namespace SpacecraftAndroid
 
         public override void ApplicationDidFinishLaunching(CCApplication application, CCWindow mainWindow)
         {
+            //Lock to current landscape orientation
+            IGraphicsDeviceService service = (IGraphicsDeviceService)application.Game.Services.GetService(typeof(IGraphicsDeviceService));
+            var xnaDeviceManager = (GraphicsDeviceManager)service;
+            switch (application.CurrentOrientation)
+            {
+                case CCDisplayOrientation.LandscapeLeft:
+                    xnaDeviceManager.SupportedOrientations = DisplayOrientation.LandscapeLeft;
+                    break;
+                case CCDisplayOrientation.LandscapeRight:
+                    xnaDeviceManager.SupportedOrientations = DisplayOrientation.LandscapeRight;
+                    break;
+            }
+            xnaDeviceManager.ApplyChanges();
+
             application.ContentRootDirectory = "Content";
             var windowSize = mainWindow.WindowSizeInPixels;
+
             mainWindow.FullScreen = true;
 
             var desiredWidth = 768.0f;
-            var desiredHeight = 1024.0f;
+            //var desiredHeight = 1024.0f;
 
             // This will set the world bounds to be (0,0, w, h)
             // CCSceneResolutionPolicy.ShowAll will ensure that the aspect ratio is preserved

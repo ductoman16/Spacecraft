@@ -6,40 +6,24 @@ using System.Linq;
 
 namespace SpacecraftAndroid
 {
-    public class IntroLayer : CCLayerColor
+    public sealed class IntroLayer : CCLayerColor
     {
-        private const int ShipSpeed = 2;
+        private static int _accelMultiplier = 17;
 
         private readonly CCSprite _ship;
-        private readonly CCSprite _leftButton;
-        private readonly CCSprite _rightButton;
 
-        private bool _leftHeld;
-        private bool _rightHeld;
+        private CCAcceleration _initialAccel;
 
         public IntroLayer() : base(CCColor4B.Gray)
         {
+
             //Init ship
             _ship = new CCSprite("ship")
             {
-                PositionX = 100,
-                PositionY = 100
+                Rotation = 90,
+                Scale = 2
             };
             AddChild(_ship);
-
-            //Init Buttons
-            _leftButton = new CCSprite("button")
-            {
-                PositionX = 100,
-                PositionY = 100
-            };
-            AddChild(_leftButton);
-
-            _rightButton = new CCSprite("button")
-            {
-                PositionY = 100
-            };
-            AddChild(_rightButton);
 
             Schedule(GameLoop);
         }
@@ -48,58 +32,56 @@ namespace SpacecraftAndroid
         {
             base.AddedToScene();
 
+            //The ship's acceleration is inverted if you're holding the device upside-down.
+            _accelMultiplier *= Application.CurrentOrientation == CCDisplayOrientation.LandscapeRight ? -1 : 1; 
+
             // Use the bounds to layout the positioning of our drawable assets
             var bounds = VisibleBoundsWorldspace;
 
             // position the label on the center of the screen
             _ship.Position = bounds.Center;
 
-            _rightButton.PositionX = VisibleBoundsWorldspace.MaxX - 100;
-
-            // Register for touch events
-            var touchListener = new CCEventListenerTouchAllAtOnce
+            Window.Accelerometer.Enabled = true;
+            var accelerometer = new CCEventListenerAccelerometer
             {
-                OnTouchesBegan = OnTouchesMoved,
-                OnTouchesEnded = OnTouchesEnded
+                OnAccelerate = OnAccelerate
             };
-            AddEventListener(touchListener, this);
+            AddEventListener(accelerometer);
         }
 
         private void GameLoop(float obj)
         {
-            if (_leftHeld)
-            {
-                _ship.PositionX -= ShipSpeed;
-            }
-            if (_rightHeld)
-            {
-                _ship.PositionX += ShipSpeed;
-            }
+            RestrainShipY();
+            RestrainShipX();
         }
 
-        private void OnTouchesMoved(List<CCTouch> touches, CCEvent touchEvent)
+        private void RestrainShipX()
         {
-            if (touches.Any())
-            {
-                if (_leftButton.BoundingBoxTransformedToWorld.ContainsPoint(touches[0].Location))
-                {
-                    _leftHeld = true;
-                }
-                if (_rightButton.BoundingBoxTransformedToWorld.ContainsPoint(touches[0].Location))
-                {
-                    _rightHeld = true;
-                }
-            }
+            if (_ship.PositionX > VisibleBoundsWorldspace.MaxX) _ship.PositionX = VisibleBoundsWorldspace.MaxX;
+            if (_ship.PositionX < VisibleBoundsWorldspace.MinX) _ship.PositionX = VisibleBoundsWorldspace.MinX;
         }
 
-        private void OnTouchesEnded(List<CCTouch> touches, CCEvent touchEvent)
+        private void RestrainShipY()
         {
-            if (touches.Any())
-            {
-                _leftHeld = false;
-                _rightHeld = false;
-            }
+            if (_ship.PositionY > VisibleBoundsWorldspace.MaxY) _ship.PositionY = VisibleBoundsWorldspace.MaxY;
+            if (_ship.PositionY < VisibleBoundsWorldspace.MinY) _ship.PositionY = VisibleBoundsWorldspace.MinY;
         }
+
+        private void OnAccelerate(CCEventAccelerate accelerateEvent)
+        {
+            var acceleration = accelerateEvent.Acceleration;
+            System.Diagnostics.Debug.WriteLine(
+                $"X: {(acceleration.X >= 0 ? " " : string.Empty)}{acceleration.X.ToString("0.00000")} " +
+                $"Y: {(acceleration.Y >= 0 ? " " : string.Empty)}{acceleration.Y.ToString("0.00000")} " +
+                $"Z: {(acceleration.Z >= 0 ? " " : string.Empty)}{acceleration.Z.ToString("0.00000")} ");
+
+            if (_initialAccel == null) _initialAccel = acceleration;
+
+            _ship.PositionX -= _accelMultiplier * Convert.ToSingle(acceleration.Y);
+            _ship.PositionY += _accelMultiplier * Convert.ToSingle(acceleration.X);
+
+        }
+
     }
 }
 

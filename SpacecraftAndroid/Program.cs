@@ -30,13 +30,21 @@ namespace SpacecraftAndroid
         {
             base.OnCreate(bundle);
 
-            CCApplication application = new CCApplication();
-            application.ApplicationDelegate = new AppDelegate();
-
+            CCApplication application = new CCApplication
+            {
+                ApplicationDelegate = new AppDelegate()
+            };
+            
             this.SetContentView(application.AndroidContentView);
 
             application.StartGame();
+        }
 
+        public override void OnConfigurationChanged(Android.Content.Res.Configuration newConfig)
+        {
+            base.OnConfigurationChanged(newConfig);
+
+            RequestedOrientation = ScreenOrientation.Landscape;
         }
     }
 
