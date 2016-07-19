@@ -68,6 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Debugger.cs" />
     <Compile Include="Models\PlayerShip.cs" />
     <Compile Include="Program.cs">
       <SubType>Code</SubType>

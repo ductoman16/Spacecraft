@@ -1,22 +1,23 @@
 using System;
-using System.Collections.Generic;
 using CocosSharp;
-using Microsoft.Xna.Framework;
-using System.Linq;
 
 namespace SpacecraftAndroid
 {
     public sealed class IntroLayer : CCLayerColor
     {
-        private static int _accelMultiplier = 17;
+        private static int _accelMultiplierY = 32;
+        private static int _accelMultiplierX = 17;
+        private static int _orientationAccelModifier;
 
         private readonly CCSprite _ship;
 
         private CCAcceleration _initialAccel;
+        private CCAcceleration _currentAcceleration;
+
+        private readonly Debugger _debugger;
 
         public IntroLayer() : base(CCColor4B.Gray)
         {
-
             //Init ship
             _ship = new CCSprite("ship")
             {
@@ -24,6 +25,11 @@ namespace SpacecraftAndroid
                 Scale = 2
             };
             AddChild(_ship);
+
+            _debugger = new Debugger();
+#if(DEBUG)
+            _debugger.InitDebugLabels(this);
+#endif
 
             Schedule(GameLoop);
         }
@@ -33,13 +39,18 @@ namespace SpacecraftAndroid
             base.AddedToScene();
 
             //The ship's acceleration is inverted if you're holding the device upside-down.
-            _accelMultiplier *= Application.CurrentOrientation == CCDisplayOrientation.LandscapeRight ? -1 : 1; 
+            _orientationAccelModifier = Application.CurrentOrientation == CCDisplayOrientation.LandscapeRight ? -1 : 1;
 
             // Use the bounds to layout the positioning of our drawable assets
             var bounds = VisibleBoundsWorldspace;
 
             // position the label on the center of the screen
             _ship.Position = bounds.Center;
+
+            //Debug labels
+#if(DEBUG)
+            _debugger.PositionDebugLabels(bounds);
+#endif
 
             Window.Accelerometer.Enabled = true;
             var accelerometer = new CCEventListenerAccelerometer
@@ -53,6 +64,8 @@ namespace SpacecraftAndroid
         {
             RestrainShipY();
             RestrainShipX();
+
+            HandleAcceleration(_currentAcceleration);
         }
 
         private void RestrainShipX()
@@ -69,19 +82,43 @@ namespace SpacecraftAndroid
 
         private void OnAccelerate(CCEventAccelerate accelerateEvent)
         {
-            var acceleration = accelerateEvent.Acceleration;
-            System.Diagnostics.Debug.WriteLine(
-                $"X: {(acceleration.X >= 0 ? " " : string.Empty)}{acceleration.X.ToString("0.00000")} " +
-                $"Y: {(acceleration.Y >= 0 ? " " : string.Empty)}{acceleration.Y.ToString("0.00000")} " +
-                $"Z: {(acceleration.Z >= 0 ? " " : string.Empty)}{acceleration.Z.ToString("0.00000")} ");
-
-            if (_initialAccel == null) _initialAccel = acceleration;
-
-            _ship.PositionX -= _accelMultiplier * Convert.ToSingle(acceleration.Y);
-            _ship.PositionY += _accelMultiplier * Convert.ToSingle(acceleration.X);
-
+            _currentAcceleration = accelerateEvent.Acceleration;
         }
 
+        private void HandleAcceleration(CCAcceleration acceleration)
+        {
+            if (acceleration.TimeStamp <= 0) return;
+
+            //Record initial acceleration as our calibration value
+            if (_initialAccel == null)
+            {
+                _initialAccel = new CCAcceleration
+                {
+                    X = acceleration.X,
+                    Y = acceleration.Y,
+                    Z = acceleration.Z
+                };
+            }
+
+            //Calculate the acceleration relative to the initial acceleration
+            var offsetAccel = new CCAcceleration
+            {
+                X = acceleration.X - _initialAccel.X,
+                Y = acceleration.Y - _initialAccel.Y,
+                Z = acceleration.Z - _initialAccel.Z
+            };
+
+            //Move the ship
+            var velocityX = _orientationAccelModifier * _accelMultiplierX * Convert.ToSingle(offsetAccel.Y);
+            _ship.PositionX -= velocityX;
+            var velocityY = _orientationAccelModifier * _accelMultiplierY * Convert.ToSingle(-offsetAccel.Z);
+            _ship.PositionY += velocityY;
+
+#if(DEBUG)
+            _debugger.DebugAcceleration(_initialAccel, acceleration, offsetAccel);
+            _debugger.DebugVelocity(velocityX, velocityY);
+#endif
+        }
     }
 }
 
