@@ -1,14 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 using CocosSharp;
 
 namespace SpacecraftAndroid
@@ -23,6 +13,7 @@ namespace SpacecraftAndroid
 
         public void InitDebugLabels(CCLayer layer)
         {
+#if (DEBUG)
             _velocityDebug = new CCLabel("", DebugFont, 100f);
             layer.AddChild(_velocityDebug);
 
@@ -37,10 +28,12 @@ namespace SpacecraftAndroid
             _offsetAccelDebug = new CCLabel("", DebugFont, 100f);
             _offsetAccelDebug.UpdateDisplayedColor(CCColor3B.Red);
             layer.AddChild(_offsetAccelDebug);
+#endif
         }
 
         public void PositionDebugLabels(CCRect worldBounds)
         {
+#if (DEBUG)
             _velocityDebug.AnchorPoint = new CCPoint(1, 0);
             _velocityDebug.Position = new CCPoint(worldBounds.MaxX - 10, 10);
 
@@ -52,10 +45,12 @@ namespace SpacecraftAndroid
 
             _offsetAccelDebug.AnchorPoint = new CCPoint(0, 0);
             _offsetAccelDebug.Position = new CCPoint(10, 60);
+#endif
         }
 
         public void DebugAcceleration(CCAcceleration initialAccel, CCAcceleration acceleration, CCAcceleration offsetAccel)
         {
+#if (DEBUG)
             var doDebug = DateTime.Now.Ticks % 5 == 0;
             if (doDebug)
             {
@@ -63,13 +58,15 @@ namespace SpacecraftAndroid
                 DebugAcceleration(acceleration, "Actual Accel: ", _actualAccelDebug);
                 DebugAcceleration(offsetAccel, "Offset Accel: ", _offsetAccelDebug);
             }
+#endif
         }
 
-        public void DebugVelocity(float velocityX, float velocityY)
+        public void DebugVelocity(double velocityX, double velocityY)
         {
+#if (DEBUG)
             var text = $"Velocity: X:{velocityX.ToString("0.00000")} Y:{velocityY.ToString("0.00000")}";
             _velocityDebug.Text = text;
-            //System.Diagnostics.Debug.WriteLine(text);
+#endif
         }
 
         private static void DebugAcceleration(CCAcceleration acceleration, string title, CCLabel debugLabel)
@@ -80,14 +77,12 @@ namespace SpacecraftAndroid
                 return;
             }
 
-
             var text = title +
                           $"X:{(acceleration.X >= 0 ? " " : string.Empty)}{acceleration.X.ToString("0.00000")} " +
                           $"Y:{(acceleration.Y >= 0 ? " " : string.Empty)}{acceleration.Y.ToString("0.00000")} " +
                           $"Z:{(acceleration.Z >= 0 ? " " : string.Empty)}{acceleration.Z.ToString("0.00000")} ";
 
             if (debugLabel != null) debugLabel.Text = text;
-            //System.Diagnostics.Debug.WriteLine(text);
         }
     }
 }
