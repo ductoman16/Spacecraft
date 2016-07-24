@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using CocosSharp;
 using SpacecraftAndroid.Controllers;
 using SpacecraftAndroid.Models;
@@ -18,6 +21,9 @@ namespace SpacecraftAndroid
         private readonly PlayerShip _ship;
         private ShipController _shipController;
 
+        private readonly CCSprite _fireButton;
+        private bool _fireButtonHeld;
+
         private CCAcceleration _initialAccel;
         private CCAcceleration _currentAcceleration;
 
@@ -28,11 +34,17 @@ namespace SpacecraftAndroid
             //Init ship
             _shipSprite = new CCSprite("ship")
             {
-                //Rotation = 90,
                 Scale = 2
             };
             AddChild(_shipSprite);
             _ship = new PlayerShip(ShipMaxVelocityX, ShipMaxVelocityY);
+
+            //Init button
+            _fireButton = new CCSprite("button")
+            {
+                Scale = 3
+            };
+            AddChild(_fireButton);
 
             _debugger = new Debugger();
             _debugger.InitDebugLabels(this);
@@ -52,22 +64,38 @@ namespace SpacecraftAndroid
 
             // position the ship on the center of the screen
             _shipSprite.Position = bounds.Center;
-            _shipController = new ShipController(_shipSprite, _ship, bounds, _debugger);
+            _shipController = new ShipController(_shipSprite, _ship, bounds, _debugger,
+                node => AddChild(node),
+                node => RemoveChild(node));
+
+            _fireButton.Position = new CCPoint(100, 100);
 
             //Debug labels
             _debugger.PositionDebugLabels(bounds);
 
+            //Init accelerometer
             Window.Accelerometer.Enabled = true;
             var accelerometer = new CCEventListenerAccelerometer
             {
                 OnAccelerate = OnAccelerate
             };
             AddEventListener(accelerometer);
+
+            //Init touch listener
+            var touchListener = new CCEventListenerTouchAllAtOnce
+            {
+                OnTouchesBegan = OnTouches,
+                OnTouchesMoved = OnTouches,
+                OnTouchesEnded = OnTouchesEnded
+            };
+            AddEventListener(touchListener, this);
         }
 
         private void GameLoop(float obj)
         {
             HandleAcceleration(_currentAcceleration);
+
+            HandleFireButtonPress();
 
             _shipController.Update();
         }
@@ -75,6 +103,34 @@ namespace SpacecraftAndroid
         private void OnAccelerate(CCEventAccelerate accelerateEvent)
         {
             _currentAcceleration = accelerateEvent.Acceleration;
+        }
+
+        private void OnTouches(List<CCTouch> touches, CCEvent touchEvent)
+        {
+            if (touches.Any())
+            {
+                if (_fireButton.BoundingBoxTransformedToWorld.ContainsPoint(touches[0].Location))
+                {
+                    _fireButtonHeld = true;
+                    Debug.WriteLine("Firing");
+                }
+            }
+        }
+
+        private void OnTouchesEnded(List<CCTouch> touches, CCEvent touchEvent)
+        {
+            if (touches.Any())
+            {
+                _fireButtonHeld = false;
+            }
+        }
+
+        private void HandleFireButtonPress()
+        {
+            if (_fireButtonHeld)
+            {
+                _shipController.Fire();
+            }
         }
 
         private void HandleAcceleration(CCAcceleration acceleration)

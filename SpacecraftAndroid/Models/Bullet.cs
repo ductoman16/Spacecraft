@@ -1,15 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-
 namespace SpacecraftAndroid.Models
 {
     /// <summary>
@@ -17,9 +5,18 @@ namespace SpacecraftAndroid.Models
     /// </summary>
     public class Bullet
     {
-        public Bullet()
+        public double VelocityX { get; }
+        public double VelocityY { get; }
+
+        public Facing Facing { get; private set; }
+
+        public Bullet(double velocityX, double velocityY)
         {
-            
+            VelocityX = velocityX;
+            VelocityY = velocityY;
+
+            if (VelocityX < 0) Facing = Facing.Left;
+            if (VelocityX > 0) Facing = Facing.Right;
         }
     }
 }

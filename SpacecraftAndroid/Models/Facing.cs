@@ -2,7 +2,7 @@ namespace SpacecraftAndroid.Models
 {
     public enum Facing
     {
-        Left,
-        Right
+        Left = -1,
+        Right = 1
     }
 }

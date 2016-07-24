@@ -1,5 +1,4 @@
 using System;
-using CocosSharp;
 
 namespace SpacecraftAndroid.Models
 {
@@ -30,12 +29,14 @@ namespace SpacecraftAndroid.Models
 
             if (y > 0) VelocityY = Math.Min(y, _maxVelocityY);
             if (y < 0) VelocityY = Math.Max(y, -1 * _maxVelocityY);
+
+            if(VelocityX < 0) Facing = Facing.Left;
+            if(VelocityX > 0) Facing = Facing.Right;
         }
 
-        public void Turn()
+        public Bullet Fire()
         {
-            Facing = Facing == Facing.Left ? Facing.Right : Facing.Left;
+            return new Bullet(50 * (int)Facing, 0);
         }
-
     }
 }
